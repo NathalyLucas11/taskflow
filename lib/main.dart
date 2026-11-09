@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 // 1. Modelo de datos Task y lista demoTasks
 class Task {
@@ -55,6 +56,29 @@ final List<Task> demoTasks = [
   ),
 ];
 
+// Configuración de appRouter
+final GoRouter appRouter = GoRouter(
+  routes: [
+    GoRoute(
+      path: '/',
+      builder: (context, state) => const WelcomeScreen(),
+      routes: [
+        GoRoute(
+          path: 'tasks',
+          builder: (context, state) => const TaskListScreen(),
+        ),
+      ],
+    ),
+    GoRoute(
+      path: '/task/:id',
+      builder: (context, state) {
+        final taskId = int.parse(state.pathParameters['id']!);
+        return TaskDetailScreen(taskId: taskId);
+      },
+    ),
+  ],
+);
+
 void main() {
   runApp(const TaskFlowApp());
 }
@@ -64,14 +88,14 @@ class TaskFlowApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       title: 'TaskFlow',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
         useMaterial3: true,
       ),
-      home: const WelcomeScreen(),
+      routerConfig: appRouter,
     );
   }
 }
@@ -172,15 +196,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
             ),
             const SizedBox(height: 20),
 
-            // 2. Nuevo botón para navegar a la pantalla "TaskListScreen"
             FilledButton.icon(
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const TaskListScreen(),
-                  ),
-                );
+                context.go('/tasks');
               },
               icon: const Icon(Icons.list_alt),
               label: const Text('Ver todas las tareas'),
@@ -192,7 +210,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   }
 }
 
-// 3. Tu nueva pantalla TaskListScreen agregada
 class TaskListScreen extends StatelessWidget {
   const TaskListScreen({super.key});
 
@@ -205,30 +222,73 @@ class TaskListScreen extends StatelessWidget {
         itemCount: demoTasks.length,
         itemBuilder: (context, index) {
           final task = demoTasks[index];
-          return TaskCard(task: task);
+          return TaskCard(
+            task: task,
+            // Solución 2: Usar interpolación aquí
+            onTap: () => context.push('/task/${task.id}'),
+          );
         },
       ),
     );
   }
 }
 
-// 4. Tu componente TaskCard
 class TaskCard extends StatelessWidget {
-  const TaskCard({super.key, required this.task});
+  const TaskCard({super.key, required this.task, this.onTap});
 
   final Task task;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     return Card(
       child: ListTile(
+        onTap: onTap,
         leading: Icon(
           task.isCompleted ? Icons.check_circle : Icons.radio_button_unchecked,
           color: task.isCompleted ? Colors.green : null,
         ),
         title: Text(task.title),
+        // Solución 1: Usar interpolación en el subtítulo
         subtitle: Text('${task.priority} · ${task.description}'),
         trailing: const Icon(Icons.chevron_right),
+      ),
+    );
+  }
+}
+
+class TaskDetailScreen extends StatelessWidget {
+  const TaskDetailScreen({super.key, required this.taskId});
+
+  final int taskId;
+
+  @override
+  Widget build(BuildContext context) {
+    final task = demoTasks.firstWhere((item) => item.id == taskId);
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Detalle de tarea')),
+      body: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(task.title, style: Theme.of(context).textTheme.headlineSmall),
+            const SizedBox(height: 16),
+            Text(task.description),
+            const SizedBox(height: 16),
+            // Solución 3: Usar interpolación en el Chip
+            Chip(label: Text('Prioridad: ${task.priority}')),
+            const SizedBox(height: 12),
+            Text(task.isCompleted ? 'Estado: completada' : 'Estado: pendiente'),
+            const Spacer(),
+            FilledButton.tonalIcon(
+              onPressed: () => context.pop(),
+              icon: const Icon(Icons.arrow_back),
+              label: const Text('Volver al listado'),
+            ),
+          ],
+        ),
       ),
     );
   }
