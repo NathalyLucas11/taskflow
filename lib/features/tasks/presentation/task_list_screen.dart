@@ -27,12 +27,27 @@ class TaskListScreen extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
-          final messenger = ScaffoldMessenger.of(context);
           final draft = await context.push<TaskDraft>('/new');
           if (draft == null) return;
-          messenger.showSnackBar(
-            SnackBar(content: Text('Formulario válido: ${draft.title}')),
-          );
+          if (!context.mounted) return;
+
+          try {
+            await context.read<TasksViewModel>().createTask(
+              draft.title,
+              draft.description,
+              draft.priority,
+            );
+            if (context.mounted) {
+              ScaffoldMessenger.of(context)
+                  .showSnackBar(const SnackBar(content: Text('Tarea creada')));
+            }
+          } catch (_) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('No se pudo crear la tarea')),
+              );
+            }
+          }
         },
         icon: const Icon(Icons.add),
         label: const Text('Nueva tarea'),

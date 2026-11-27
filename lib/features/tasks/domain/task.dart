@@ -15,12 +15,17 @@ class Task {
   final bool isCompleted;
   final int userId;
 
-  Task copyWith({bool? isCompleted}) {
+  Task copyWith({
+    String? title,
+    String? description,
+    String? priority,
+    bool? isCompleted,
+  }) {
     return Task(
       id: id,
-      title: title,
-      description: description,
-      priority: priority,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      priority: priority ?? this.priority,
       isCompleted: isCompleted ?? this.isCompleted,
       userId: userId,
     );
