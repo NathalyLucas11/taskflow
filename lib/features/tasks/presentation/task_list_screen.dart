@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import 'task_form_screen.dart';
 import 'tasks_view_model.dart';
 
 class TaskListScreen extends StatelessWidget {
@@ -23,6 +24,18 @@ class TaskListScreen extends StatelessWidget {
             icon: const Icon(Icons.refresh),
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          final messenger = ScaffoldMessenger.of(context);
+          final draft = await context.push<TaskDraft>('/new');
+          if (draft == null) return;
+          messenger.showSnackBar(
+            SnackBar(content: Text('Formulario válido: ${draft.title}')),
+          );
+        },
+        icon: const Icon(Icons.add),
+        label: const Text('Nueva tarea'),
       ),
       body: _buildBody(context, viewModel),
     );
